@@ -15,6 +15,7 @@ import { Link } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../config/firebase";
 import { Mail, Lock } from "lucide-react-native";
+import { Colors } from "../../constants/Colors";
 
 export default function SignInScreen() {
   const [emailAddress, setEmailAddress] = useState("");
@@ -63,24 +64,24 @@ export default function SignInScreen() {
 
         <View style={styles.formView}>
           <View style={styles.inputContainer}>
-            <Mail color="#9CA3AF" size={20} style={styles.inputIcon} />
+            <Mail color={Colors.icon} size={20} style={styles.inputIcon} />
             <TextInput
               autoCapitalize="none"
               keyboardType="email-address"
               value={emailAddress}
               placeholder="Email"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={Colors.icon}
               onChangeText={setEmailAddress}
               style={styles.input}
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <Lock color="#9CA3AF" size={20} style={styles.inputIcon} />
+            <Lock color={Colors.icon} size={20} style={styles.inputIcon} />
             <TextInput
               value={password}
               placeholder="Password"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={Colors.icon}
               secureTextEntry
               onChangeText={setPassword}
               style={styles.input}
@@ -93,7 +94,7 @@ export default function SignInScreen() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={Colors.white} />
             ) : (
               <Text style={styles.primaryButtonText}>Sign In</Text>
             )}
@@ -116,7 +117,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.background,
   },
   content: {
     flex: 1,
@@ -137,12 +138,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#111827",
+    color: Colors.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: "#6B7280",
+    color: Colors.textSecondary,
     textAlign: "center",
   },
   formView: {
@@ -151,14 +152,14 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: Colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 56,
     marginBottom: 16,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -170,25 +171,25 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: "#111827",
+    color: Colors.text,
     height: "100%",
   },
   primaryButton: {
-    backgroundColor: "#00BFA6",
+    backgroundColor: Colors.primary,
     borderRadius: 12,
     height: 56,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 8,
     marginBottom: 24,
-    shadowColor: "#00BFA6",
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   primaryButtonText: {
-    color: "#FFFFFF",
+    color: Colors.white,
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -199,11 +200,11 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   footerText: {
-    color: "#6B7280",
+    color: Colors.textSecondary,
     fontSize: 15,
   },
   footerLink: {
-    color: "#00BFA6",
+    color: Colors.primary,
     fontSize: 15,
     fontWeight: "bold",
   },

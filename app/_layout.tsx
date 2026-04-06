@@ -14,40 +14,59 @@ async function ensureUserDocument(firebaseUser: User) {
       email: firebaseUser.email ?? "",
       firstName: firebaseUser.displayName ?? "",
       createdAt: new Date().toISOString(),
+      isOnboarded: false,
     });
     console.log("User document created in Firestore.");
+    return { isOnboarded: false };
   }
+  return snapshot.data();
 }
 
-function useProtectedRoute(user: User | null, initializing: boolean) {
+function useProtectedRoute(user: User | null, isOnboarded: boolean | null, initializing: boolean) {
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    if (initializing) return;
+    if (initializing || (user && isOnboarded === null)) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const inOnboardingGroup = segments[0] === "(onboarding)";
 
-    if (!user && !inAuthGroup) {
-      router.replace("/(auth)/sign-in");
-    } else if (user && inAuthGroup) {
-      router.replace("/");
+    if (!user) {
+      if (!inAuthGroup) {
+        router.replace("/(auth)/sign-in");
+      }
+    } else {
+      if (!isOnboarded) {
+        if (!inOnboardingGroup) {
+          router.replace("/(onboarding)");
+        }
+      } else {
+        if (inAuthGroup || inOnboardingGroup) {
+          router.replace("/");
+        }
+      }
     }
-  }, [user, segments, initializing]);
+  }, [user, isOnboarded, segments, initializing]);
 }
 
 const InitialLayout = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          await ensureUserDocument(firebaseUser);
+          const userData = await ensureUserDocument(firebaseUser);
+          setIsOnboarded(userData?.isOnboarded || false);
         } catch (err) {
           console.warn("Failed to ensure user document:", err);
+          setIsOnboarded(false);
         }
+      } else {
+        setIsOnboarded(null);
       }
       setUser(firebaseUser);
       setInitializing(false);
@@ -55,11 +74,12 @@ const InitialLayout = () => {
     return unsubscribe;
   }, []);
 
-  useProtectedRoute(user, initializing);
+  useProtectedRoute(user, isOnboarded, initializing);
 
   return (
     <Stack>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>
   );

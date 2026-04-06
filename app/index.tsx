@@ -3,6 +3,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "../config/firebase";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
+import { Colors } from "../constants/Colors";
 
 export default function Index() {
   const [user, setUser] = useState<User | null>(null);
@@ -41,34 +42,34 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: Colors.background,
     padding: 24,
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#111827",
+    color: Colors.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "#6B7280",
+    color: Colors.textSecondary,
     marginBottom: 32,
     textAlign: "center",
   },
   button: {
-    backgroundColor: "#EF4444",
+    backgroundColor: Colors.error,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 12,
-    shadowColor: "#EF4444",
+    shadowColor: Colors.error,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   buttonText: {
-    color: "#FFFFFF",
+    color: Colors.white,
     fontSize: 16,
     fontWeight: "bold",
   },
