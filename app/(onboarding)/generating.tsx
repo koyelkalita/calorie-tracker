@@ -121,7 +121,14 @@ Return ONLY a JSON object exactly matching this structure:
       <View style={styles.container}>
         <Text style={styles.errorText}>Something went wrong!</Text>
         <Text style={styles.errorSub}>{error}</Text>
-        <TouchableOpacity style={styles.button} onPress={() => router.replace('/')}>
+        <TouchableOpacity style={styles.button} onPress={async () => {
+          const user = auth.currentUser;
+          if (user) {
+            const userRef = doc(db, 'users', user.uid);
+            await updateDoc(userRef, { isOnboarded: true });
+          }
+          router.replace('/');
+        }}>
           <Text style={styles.buttonText}>Skip for now</Text>
         </TouchableOpacity>
       </View>

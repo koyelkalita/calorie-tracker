@@ -1,7 +1,7 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 
 async function ensureUserDocument(firebaseUser: User) {
@@ -65,22 +65,33 @@ const InitialLayout = () => {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
+    let unsubscribeDoc: (() => void) | undefined;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
           const userData = await ensureUserDocument(firebaseUser);
           setIsOnboarded(userData?.isOnboarded || false);
+          // Listen for isOnboarded changes
+          const userRef = doc(db, "users", firebaseUser.uid);
+          unsubscribeDoc = onSnapshot(userRef, (snapshot) => {
+            const data = snapshot.data();
+            setIsOnboarded(data?.isOnboarded || false);
+          });
         } catch (err) {
           console.warn("Failed to ensure user document:", err);
           setIsOnboarded(false);
         }
       } else {
+        unsubscribeDoc?.();
         setIsOnboarded(null);
       }
       setUser(firebaseUser);
       setInitializing(false);
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      unsubscribeDoc?.();
+    };
   }, []);
 
   useProtectedRoute(user, isOnboarded, initializing);

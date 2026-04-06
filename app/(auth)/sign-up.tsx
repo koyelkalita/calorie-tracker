@@ -47,7 +47,8 @@ export default function SignUpScreen() {
         email: emailAddress,
         firstName: firstName,
         createdAt: new Date().toISOString(),
-      });
+        isOnboarded: false
+      }, { merge: true });
 
       console.log("User successfully saved to Firestore!");
       // onAuthStateChanged in _layout.tsx will detect the new session
