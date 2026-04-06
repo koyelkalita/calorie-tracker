@@ -5,6 +5,15 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 
 async function ensureUserDocument(firebaseUser: User) {
+  const creationTime = firebaseUser.metadata.creationTime;
+  if (creationTime) {
+    const createdAt = new Date(creationTime).getTime();
+    const now = Date.now();
+    // If account was created within last 10 seconds, let sign-up.tsx handle it
+    if (now - createdAt < 10000) {
+      return;
+    }
+  }
   const userRef = doc(db, "users", firebaseUser.uid);
   const snapshot = await getDoc(userRef);
 
