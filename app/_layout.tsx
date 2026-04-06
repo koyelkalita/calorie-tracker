@@ -1,10 +1,19 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 
 async function ensureUserDocument(firebaseUser: User) {
+  const creationTime = firebaseUser.metadata.creationTime;
+  if (creationTime) {
+    const createdAt = new Date(creationTime).getTime();
+    const now = Date.now();
+    // If account was created within last 10 seconds, let sign-up.tsx handle it
+    if (now - createdAt < 10000) {
+      return;
+    }
+  }
   const userRef = doc(db, "users", firebaseUser.uid);
   const snapshot = await getDoc(userRef);
 
@@ -14,52 +23,83 @@ async function ensureUserDocument(firebaseUser: User) {
       email: firebaseUser.email ?? "",
       firstName: firebaseUser.displayName ?? "",
       createdAt: new Date().toISOString(),
+      isOnboarded: false,
     });
     console.log("User document created in Firestore.");
+    return { isOnboarded: false };
   }
+  return snapshot.data();
 }
 
-function useProtectedRoute(user: User | null, initializing: boolean) {
+function useProtectedRoute(user: User | null, isOnboarded: boolean | null, initializing: boolean) {
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    if (initializing) return;
+    if (initializing || (user && isOnboarded === null)) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const inOnboardingGroup = segments[0] === "(onboarding)";
 
-    if (!user && !inAuthGroup) {
-      router.replace("/(auth)/sign-in");
-    } else if (user && inAuthGroup) {
-      router.replace("/");
+    if (!user) {
+      if (!inAuthGroup) {
+        router.replace("/(auth)/sign-in");
+      }
+    } else {
+      if (!isOnboarded) {
+        if (!inOnboardingGroup) {
+          router.replace("/(onboarding)");
+        }
+      } else {
+        if (inAuthGroup || inOnboardingGroup) {
+          router.replace("/");
+        }
+      }
     }
-  }, [user, segments, initializing]);
+  }, [user, isOnboarded, segments, initializing]);
 }
 
 const InitialLayout = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
+    let unsubscribeDoc: (() => void) | undefined;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          await ensureUserDocument(firebaseUser);
+          const userData = await ensureUserDocument(firebaseUser);
+          setIsOnboarded(userData?.isOnboarded || false);
+          // Listen for isOnboarded changes
+          const userRef = doc(db, "users", firebaseUser.uid);
+          unsubscribeDoc = onSnapshot(userRef, (snapshot) => {
+            const data = snapshot.data();
+            setIsOnboarded(data?.isOnboarded || false);
+          });
         } catch (err) {
           console.warn("Failed to ensure user document:", err);
+          setIsOnboarded(false);
         }
+      } else {
+        unsubscribeDoc?.();
+        setIsOnboarded(null);
       }
       setUser(firebaseUser);
       setInitializing(false);
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      unsubscribeDoc?.();
+    };
   }, []);
 
-  useProtectedRoute(user, initializing);
+  useProtectedRoute(user, isOnboarded, initializing);
 
   return (
     <Stack>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>
   );
